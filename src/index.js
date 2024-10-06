@@ -35,7 +35,7 @@ const client = new Client({
     };
   
     await loadFunctions(client, sortedData);
-    watchForChanges(client, sortedData);
+//    watchForChanges(client, sortedData);
 
     await client.login(process.env.DISCORD_TOKEN);
   } catch (error) {

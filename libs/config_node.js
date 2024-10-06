@@ -14,13 +14,15 @@ export async function watchNodes() {
 
     watcher.on('addDir', async (dir) => {
       const configPath = path.join(dir, 'node_config.json');
+      
       if (await exists(configPath)) {
         try {
           const config = await readNodeConfig(configPath);
           console.log(config);
+          
           if (isValidConfig(config)) {
             console.log('Processing node:', config.name);
-            nodeEmitter.emit('nodeAdded', { config, dir });  // Emit an event when a valid config is found
+            nodeEmitter.emit('nodeAdded', { config, dir });
           }
         } catch (err) {
           console.error('Error processing folder:', err.message);
@@ -28,10 +30,9 @@ export async function watchNodes() {
       }
     });
 
-    watcher.on('error', (err) => {
-      reject('watcher error:', err);
-    })
-  })
+    watcher.on('ready', () => resolve('watcher ready'));  // Resolve when watcher is ready
+    watcher.on('error', (err) => reject('watcher error:', err));
+  });
 }
 
 export async function readNodeConfig(configPath) {
