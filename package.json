@@ -11,6 +11,11 @@
   "type": "module",
   "license": "ISC",
   "dependencies": {
-    "chokidar": "^4.0.1"
+    "chokidar": "^4.0.1",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
   }
 }
