@@ -1,4 +1,4 @@
 node_modules/
 .env
-nodes/
+#nodes/
 pnpm-lock.yaml
