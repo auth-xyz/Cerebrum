@@ -1,38 +1,35 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { watch } from "chokidar"
+import { watch } from "chokidar";
 
 export const nodesDir = path.join(process.cwd(), 'nodes');
 
-export async function watchNodesFolder() {
+export async function watchNodes() {
     const watcher = watch(nodesDir, { persistent: true, depth: 1 });
 
-    watcher.on('addDir', async (newDirPath) => {
-        const configPath = path.join(newDirPath, 'node_config.json');
-        try {
-            if (await fileExists(configPath)) {
-                const configData = await readNodeConfig(configPath);
-                if (validateConfig(configData)) {
-                    console.log('Processing node:', configData.name);
-                    return { configData, newDirPath };
+    watcher.on('addDir', async (dir) => {
+        const configPath = path.join(dir, 'node_config.json');
+        if (await exists(configPath)) {
+            try {
+                const config = await readNodeConfig(configPath);
+                console.log(config);
+                if (isValidConfig(config)) {
+                    console.log('Processing node:', config.name);
+                    return { config, dir };
                 }
+            } catch (err) {
+                console.error('Error processing folder:', err.message);
             }
-        } catch (error) {
-            console.error('Error processing folder:', error.message);
         }
     });
 }
 
 export async function readNodeConfig(configPath) {
-    try {
-        const data = await fs.readFile(configPath, 'utf-8');
-        return JSON.parse(data);
-    } catch (error) {
-        throw new Error(`Failed to read or parse node_config.json: ${error.message}`);
-    }
+    const data = await fs.readFile(configPath, 'utf-8');
+    return JSON.parse(data);
 }
 
-async function fileExists(filePath) {
+async function exists(filePath) {
     try {
         await fs.access(filePath);
         return true;
@@ -41,8 +38,8 @@ async function fileExists(filePath) {
     }
 }
 
-export function validateConfig(config) {
-    const requiredFields = {
+function isValidConfig(config) {
+    const required = {
         name: 'string',
         author: 'string',
         description: 'string',
@@ -53,10 +50,9 @@ export function validateConfig(config) {
         node_events: 'array'
     };
 
-    return Object.keys(requiredFields).every(field => {
-        const expectedType = requiredFields[field];
-        const actualType = Array.isArray(config[field]) ? 'array' : typeof config[field];
-        return actualType === expectedType;
+    return Object.keys(required).every(key => {
+        const type = Array.isArray(config[key]) ? 'array' : typeof config[key];
+        return type === required[key];
     });
 }
 

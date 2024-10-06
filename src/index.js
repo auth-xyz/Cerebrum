@@ -1,5 +1,5 @@
 import { Client, GatewayIntentBits } from 'discord.js';
-import { watchNodesFolder } from '../libs/config_node.js';
+import { watchNodes } from '../libs/config_node.js';
 import { loadFunctions, watchForChanges } from '../libs/loader_node.js';  
 import { getSortedData } from '../libs/controller_node.js';
 import path from 'path';
@@ -13,14 +13,20 @@ const client = new Client({
 (async () => {
   try {
     const nodeDir = path.join(process.cwd(), 'nodes');
-    const nodeData = await watchNodesFolder(nodeDir);
+    const nodeData = await watchNodes();
+
+    if (typeof(nodeData) == "undefined") 
+    {
+      return console.error('Error loading the node data.\nReturned "undefined"');
+    }
 
     if (nodeData) {
       const sortedData = await getSortedData(nodeData.newDirPath);
       
       if (sortedData) {
         await loadFunctions(client, sortedData);
-        watchForChanges(client, sortedData);  // Optional live reloading
+        console.log(sortedData)
+        watchForChanges(client, sortedData); // I fucking hate my life
       }
     }
 
