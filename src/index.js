@@ -15,20 +15,27 @@ const client = new Client({
     const nodeDir = path.join(process.cwd(), 'nodes');
     const nodeData = await watchNodes();
 
-    if (typeof(nodeData) == "undefined") 
+    if(typeof(nodeData) == "undefined")
     {
-      return console.error('Error loading the node data.\nReturned "undefined"');
-    }
+      console.error('Error loading the node data.\nReturned "undefined", exiting...');
+      return process.exit(1);
+    };
 
-    if (nodeData) {
-      const sortedData = await getSortedData(nodeData.newDirPath);
-      
-      if (sortedData) {
-        await loadFunctions(client, sortedData);
-        console.log(sortedData)
-        watchForChanges(client, sortedData); // I fucking hate my life
-      }
-    }
+    if(!nodeData) 
+    {
+      console.error('Failed to recieve "nodeData"\nExiting...');
+      return process.exit(1);
+    };
+
+    const sortedData = await getSortedData(nodeData.newDirPath);
+    if (!sortedData)
+    {
+      console.error('Failed to read "sortedData"\nExiting...');
+      return process.exit(1);
+    };
+  
+    await loadFunctions(client, sortedData);
+    watchForChanges(client, sortedData);
 
     await client.login(process.env.DISCORD_TOKEN);
   } catch (error) {

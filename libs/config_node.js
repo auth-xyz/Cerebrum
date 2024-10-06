@@ -1,27 +1,37 @@
 import fs from 'fs/promises';
 import path from 'path';
+
 import { watch } from "chokidar";
+import { object, string, number, array } from "yup";
+import { EventEmitter } from 'events';
 
 export const nodesDir = path.join(process.cwd(), 'nodes');
+export const nodeEmitter = new EventEmitter();
 
 export async function watchNodes() {
+  return new Promise((resolve, reject) => {
     const watcher = watch(nodesDir, { persistent: true, depth: 1 });
 
     watcher.on('addDir', async (dir) => {
-        const configPath = path.join(dir, 'node_config.json');
-        if (await exists(configPath)) {
-            try {
-                const config = await readNodeConfig(configPath);
-                console.log(config);
-                if (isValidConfig(config)) {
-                    console.log('Processing node:', config.name);
-                    return { config, dir };
-                }
-            } catch (err) {
-                console.error('Error processing folder:', err.message);
-            }
+      const configPath = path.join(dir, 'node_config.json');
+      if (await exists(configPath)) {
+        try {
+          const config = await readNodeConfig(configPath);
+          console.log(config);
+          if (isValidConfig(config)) {
+            console.log('Processing node:', config.name);
+            nodeEmitter.emit('nodeAdded', { config, dir });  // Emit an event when a valid config is found
+          }
+        } catch (err) {
+          console.error('Error processing folder:', err.message);
         }
+      }
     });
+
+    watcher.on('error', (err) => {
+      reject('watcher error:', err);
+    })
+  })
 }
 
 export async function readNodeConfig(configPath) {
@@ -39,17 +49,17 @@ async function exists(filePath) {
 }
 
 function isValidConfig(config) {
-    const required = {
-        name: 'string',
-        author: 'string',
-        description: 'string',
-        node_version: 'string',
-        node_guildid: 'string',
-        node_type: 'string',
-        node_commands: 'array',
-        node_events: 'array'
-    };
-
+    let required = object({
+      name: string().required(),
+      author: string().required(),
+      description: string(),
+      node_version: string().required(),
+      node_guildid: number().positive().integer(),
+      node_type: string().required(),
+      node_commands: array().required(),
+      node_events: array().required()
+    })
+    
     return Object.keys(required).every(key => {
         const type = Array.isArray(config[key]) ? 'array' : typeof config[key];
         return type === required[key];
