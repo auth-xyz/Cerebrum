@@ -1,22 +1,29 @@
 import fs from 'fs/promises'
+import * as yup from 'yup';
+import { REST, Routes } from 'discord.js';
 
-export function validateConfig(config) {
-    const requiredFields = {
-        name: 'string',
-        author: 'string',
-        description: 'string',
-        node_version: 'string',
-        node_guildid: 'string',
-        node_type: 'string',
-        node_commands: 'array',
-        node_events: 'array'
-    };
+import 'dotenv/config'
 
-    return Object.keys(requiredFields).every(field => {
-        const expectedType = requiredFields[field];
-        const actualType = Array.isArray(config[field]) ? 'array' : typeof config[field];
-        return actualType === expectedType;
-    });
+export const rest = new REST().setToken(process.env.DISCORD_TOKEN)
+
+export async function validateConfig(config) {
+  const schema = yup.object().shape({
+    name: yup.string().required(),
+    author: yup.string().required(),
+    description: yup.string().required(),
+    node_version: yup.string().required(),
+    node_guildid: yup.string().required(),
+    node_type: yup.string().required(),
+    node_commands: yup.array().of(yup.string()).required(),
+    node_events: yup.array().of(yup.string()).required(),
+  });
+
+  try {
+    await schema.validate(config, { abortEarly: false });
+    return { valid: true, errors: null };
+  } catch (err) {
+    return { valid: false, errors: err.errors };
+  }
 }
 
 export async function extractFunctionName(filePath) {

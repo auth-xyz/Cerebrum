@@ -1,5 +1,6 @@
-import { Collection } from 'discord.js';
+import { Collection, Routes } from 'discord.js';
 import { watch } from 'chokidar';
+import { rest } from './utils.js';
 
 import fs from 'fs'
 import path from 'path';
@@ -80,14 +81,14 @@ async function handleComponent(client, component, type, nodeType, nodeGuildId) {
 
 async function registerCommand(client, commandData, nodeType, nodeGuildId) {
   const registerGlobalCommand = async () => {
-    await client.application.commands.create(commandData);
+    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID))
     console.log(`Registered global command: ${commandData.name}`);
   };
 
   switch (nodeType) {
     case 'hybrid':
       if (nodeGuildId) {
-        await client.application.commands.set([commandData], nodeGuildId);
+        await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, nodeGuildId), { body: [commandData] });
         console.log(`Registered server-specific command: ${commandData.name}`);
       }
       await registerGlobalCommand();
@@ -95,7 +96,7 @@ async function registerCommand(client, commandData, nodeType, nodeGuildId) {
 
     case 'server':
       if (nodeGuildId) {
-        await client.application.commands.set([commandData], nodeGuildId);
+        await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, nodeGuildId), { body: [commandData] });
         console.log(`Registered server-specific command: ${commandData.name}`);
       }
       break;

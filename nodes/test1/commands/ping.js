@@ -3,7 +3,8 @@ import { EmbedBuilder } from 'discord.js';
 export default {
     data: {
         name: 'ping',
-        description: 'Check the bot\'s latency'
+        description: 'Check the bot\'s latency',
+        options: []
     },
     async execute(interaction) {
         const latency = interaction.client.ws.ping;

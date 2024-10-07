@@ -25,7 +25,6 @@ export async function sortConfigNodeData(nodeDir) {
 
         if (validateConfig(configData)) {
             const { name, author, description, node_commands, node_events, node_type, node_guildid, node_version } = configData;
-
             return {
                 name: name || '',
                 author: author || '',

@@ -33,7 +33,6 @@ const client = new Client({
 
     await client.login(process.env.DISCORD_TOKEN);
     await loadFunctions(client, sortedData);
-    watchForChanges(client, sortedData);
 
     console.log('Bot is now running and watching for changes...');
   } catch (error) {

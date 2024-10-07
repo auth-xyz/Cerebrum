@@ -20,7 +20,6 @@ export async function watchNodes() {
       if (await exists(configPath)) {
         try {
           const config = await readNodeConfig(configPath);
-          console.log(config);
 
           if (validateConfig(config)) {
             console.log('Processing node:', config.name);
