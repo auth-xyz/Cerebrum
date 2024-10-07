@@ -5,17 +5,17 @@ export default {
         name: 'ping',
         description: 'Check the bot\'s latency'
     },
-    async execute(message) {
-        const latency = message.client.ws.ping;
+    async execute(interaction) {
+        const latency = interaction.client.ws.ping;
 
         const embed = new EmbedBuilder()
             .setTitle('Bot Latency')
             .setColor('#0099ff')
             .setDescription(`🏓 Pong! The latency is **${latency}ms**.`)
-            .setFooter({ text: `Requested by ${message.author.tag}`, iconURL: message.author.displayAvatarURL() })
+            .setFooter({ text: `Requested by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() })
             .setTimestamp();
 
-        await message.channel.send({ embeds: [embed] });
+        await interaction.reply({ embeds: [embed] });
     }
 };
 

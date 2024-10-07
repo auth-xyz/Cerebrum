@@ -7,7 +7,11 @@ import { sortConfigNodeData } from '../libs/sorter_node.js';
 import { loadFunctions, watchForChanges } from '../libs/loader_node.js';
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+  intents: [ 
+    GatewayIntentBits.Guilds, 
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ],
 });
 
 (async () => {

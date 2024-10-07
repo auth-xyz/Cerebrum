@@ -1,27 +1,37 @@
 import { Collection } from 'discord.js';
 import { watch } from 'chokidar';
-import path from "path";
+
+import fs from 'fs'
+import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export async function loadFunctions(client, sortedData) {
   const { node_commands, node_events, node_type, node_guildid } = sortedData;
-  //const nodeDir = path.join(process.cwd(), 'nodes');
-  const nodeDir = path.join(__dirname, '../nodes/test1');
+  const nodesDir = path.join(__dirname, '../nodes');
+  const nodeDirs = fs.readdirSync(nodesDir).filter(dir => {
+    const dirPath = path.join(nodesDir, dir);
+    return fs.statSync(dirPath).isDirectory() && 
+      fs.existsSync(path.join(dirPath, 'node_config.json'));
+  });
 
   if (node_commands.length > 0) {
-    await reloadComponents(client, node_commands, 'command', node_type, node_guildid, nodeDir);
+    for (const nodeDir of nodeDirs) {
+      await reloadComponents(client, node_commands, 'command', node_type, node_guildid, path.join(nodesDir, nodeDir));
+    }
   }
 
   if (node_events.length > 0) {
-    await reloadComponents(client, node_events, 'event', node_type, null, nodeDir); 
+    for (const nodeDir of nodeDirs) {
+      await reloadComponents(client, node_events, 'event', node_type, null, path.join(nodesDir, nodeDir));
+    }
   }
 
-  console.log("Bot successfully reloaded with new commands and events.");
+  console.log('Bot successfully reloaded with new commands and events.');
 }
 
-async function reloadComponents(client, components, type, nodeType, nodeGuildId = null, nodeDir) {
+async function reloadComponents(client, components, type, nodeType, nodeGuildId, nodeDir) {
   if (type === 'command') {
     client.commands = new Collection();
   } else {
@@ -33,8 +43,6 @@ async function reloadComponents(client, components, type, nodeType, nodeGuildId 
   const componentPromises = components.map(async (componentPath) => {
     const file = typeof componentPath === 'string' ? componentPath : componentPath.file;
 
-    console.log('Component path:', file);
-
     if (!file) {
       console.error('Component file path is undefined:', componentPath);
       return;
@@ -42,9 +50,6 @@ async function reloadComponents(client, components, type, nodeType, nodeGuildId 
 
     try {
       const fullPath = path.join(nodeDir, file);
-
-      console.log('Full path:', fullPath); 
-
       const importedComponent = await import(fullPath);
 
       if (!importedComponent.default?.data || typeof importedComponent.default.execute !== 'function') {
@@ -52,26 +57,7 @@ async function reloadComponents(client, components, type, nodeType, nodeGuildId 
         return;
       }
 
-      if (type === 'command') {
-        client.commands.set(importedComponent.default.data.name, importedComponent.default);
-        await registerCommand(client, importedComponent.default.data, nodeType, nodeGuildId);
-      } else {
-        const eventName = importedComponent.default.data.name;
-        if (importedComponent.default.once) {
-          client.once(eventName, (...args) => importedComponent.default.execute(...args));
-        } else {
-          client.on(eventName, (...args) => importedComponent.default.execute(...args));
-        }
-      }
-      if (type === 'event') {
-        const eventName = importedComponent.default.data.name;
-        if (importedComponent.default.once) {
-          client.once(eventName, (...args) => importedComponent.default.execute(...args));
-        } else {
-          client.on(eventName, (...args) => importedComponent.default.execute(...args));
-        }
-      }
-
+      await handleComponent(client, importedComponent.default, type, nodeType, nodeGuildId);
       console.log(`Reloaded ${type}: ${importedComponent.default.data.name}`);
     } catch (error) {
       console.error(error);
@@ -81,16 +67,30 @@ async function reloadComponents(client, components, type, nodeType, nodeGuildId 
   await Promise.all(componentPromises);
 }
 
+async function handleComponent(client, component, type, nodeType, nodeGuildId) {
+  if (type === 'command') {
+    client.commands.set(component.data.name, component);
+    await registerCommand(client, component.data, nodeType, nodeGuildId);
+  } else {
+    const eventName = component.data.name;
+    const execute = (...args) => component.execute(...args);
+    component.once ? client.once(eventName, execute) : client.on(eventName, execute);
+  }
+}
 
 async function registerCommand(client, commandData, nodeType, nodeGuildId) {
+  const registerGlobalCommand = async () => {
+    await client.application.commands.create(commandData);
+    console.log(`Registered global command: ${commandData.name}`);
+  };
+
   switch (nodeType) {
     case 'hybrid':
       if (nodeGuildId) {
         await client.application.commands.set([commandData], nodeGuildId);
         console.log(`Registered server-specific command: ${commandData.name}`);
       }
-      await client.application.commands.create(commandData);
-      console.log(`Registered global command: ${commandData.name}`);
+      await registerGlobalCommand();
       break;
 
     case 'server':
@@ -101,8 +101,7 @@ async function registerCommand(client, commandData, nodeType, nodeGuildId) {
       break;
 
     case 'internal':
-      await client.application.commands.create(commandData);
-      console.log(`Registered global command: ${commandData.name}`);
+      await registerGlobalCommand();
       break;
 
     default:
@@ -129,6 +128,6 @@ export function watchForChanges(client, sortedData) {
     });
   }
 
-  console.log("Watching for file changes...");
+  console.log('Watching for file changes...');
 }
 

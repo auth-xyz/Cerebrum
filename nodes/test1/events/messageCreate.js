@@ -1,11 +1,10 @@
 export default {
-    data: {
-        name: 'messageCreate',
-    },
-    execute(message) {
-        if (message.content === 'ping') {
-            message.channel.send('Pong!');
-        }
-    },
+  data: {
+    name: 'messageCreate',
+  },
+  execute(message) {
+    if (message.author.bot) return;
+    console.log(`${message.author.username}: ${message.content}`);
+  },
 };
 
