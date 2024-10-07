@@ -14,8 +14,8 @@ export async function validateConfig(config) {
     node_version: yup.string().required(),
     node_guildid: yup.string().required(),
     node_type: yup.string().required(),
-    node_commands: yup.array().of(yup.string()).required(),
-    node_events: yup.array().of(yup.string()).required(),
+    node_commands: yup.array().of(yup.string()),
+    node_events: yup.array().of(yup.string()),
   });
 
   try {

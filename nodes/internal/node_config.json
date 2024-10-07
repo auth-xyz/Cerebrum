@@ -1,18 +1,15 @@
 {
-  "name": "test",
+  "name": "internal",
   "author": "github:auth-xyz",
-  "description": "please work",
+  "description": "Internal events for any commands to work",
 
   "node_version": "1.0",
   "node_guildid": "1257611555198074922",
-  "node_type": "server",
+  "node_type": "internal",
   "node_events": [
     "./events/ready.js",
     "./events/messageCreate.js",
     "./events/interactionCreate.js"
-  ],
-  "node_commands": [
-    "./commands/ping.js"
   ]
 }
 
