@@ -82,6 +82,10 @@ nodes/internal/
 Inside the `node_config.json`, you'll see that it only has events. The config may not have commands, but it still works. SO that logic also works for commands, so essentially, a server owner could make a command which needs the `interactionCreate` event (which the bot provides internally), and the code would load that command with no issue.
 
 
+---
+
+If you'd like to contribute to fix my horrible code, please do.
+If you have any questions on how to use this mess of a code, you can send me a dm on discord <actually.auth>
 
 
 [screenshot]: https://i.imgur.com/6SwIMOb.png
