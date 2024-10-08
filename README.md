@@ -84,4 +84,4 @@ Inside the `node_config.json`, you'll see that it only has events. The config ma
 
 
 
-[screenshot]: https://imgur.com/a/5gAwLR5
+[screenshot]: https://i.imgur.com/6SwIMOb.png
