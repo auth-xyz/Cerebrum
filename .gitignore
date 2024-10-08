@@ -1,5 +1,7 @@
-.direnv/
-node_modules/
 .env
-#nodes/
+.envrc
+.direnv/
+default.nix
+
+node_modules/
 pnpm-lock.yaml
