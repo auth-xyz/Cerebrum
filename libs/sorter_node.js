@@ -1,6 +1,7 @@
 import { nodesDir } from './config_node.js';
 import path from 'path';
-import fs from "fs/promises"
+import fs from "fs/promises";
+import { logger } from './logger_node.js'; 
 
 import { extractFunctionName, mapFunctionsToFiles, validateConfig, readNodeConfig } from './utils.js';
 
@@ -39,7 +40,8 @@ export async function sortConfigNodeData(nodeDir) {
             throw new Error('Invalid config data');
         }
     } catch (error) {
-        console.error('Error getting sorted data in controller node:', error.message);
+        logger.error(`Error getting sorted data in controller node: ${error.message}`);
         return null;
     }
 };
+
