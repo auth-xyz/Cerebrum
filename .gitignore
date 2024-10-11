@@ -3,5 +3,7 @@
 .direnv/
 default.nix
 
+logs/
+
 node_modules/
 pnpm-lock.yaml
