@@ -1,0 +1,14 @@
+[2024-10-11T06:37:54.783Z] [INFO] Components being reloaded: ./events/ready.js,./events/messageCreate.js,./events/interactionCreate.js
+[2024-10-11T06:37:54.794Z] [INFO] Reloaded event: ready
+[2024-10-11T06:37:54.794Z] [INFO] Reloaded event: interactionCreate
+[2024-10-11T06:37:54.795Z] [INFO] Reloaded event: messageCreate
+[2024-10-11T06:37:54.795Z] [INFO] Bot successfully reloaded with new commands and events.
+[2024-10-11T06:42:50.612Z] [ERROR] File does not exist: /home/auth/Projects/Cerebrum/nodes/node_config.json
+[2024-10-11T06:42:50.619Z] [INFO] Watcher ready
+[2024-10-11T06:42:50.625Z] [INFO] Processing node: internal
+[2024-10-11T06:42:50.626Z] [ERROR] File does not exist: /home/auth/Projects/Cerebrum/nodes/internal/events/node_config.json
+[2024-10-11T06:42:51.642Z] [INFO] Components being reloaded: ./events/ready.js,./events/messageCreate.js,./events/interactionCreate.js
+[2024-10-11T06:42:51.649Z] [INFO] Reloaded event: ready
+[2024-10-11T06:42:51.649Z] [INFO] Reloaded event: messageCreate
+[2024-10-11T06:42:51.649Z] [INFO] Reloaded event: interactionCreate
+[2024-10-11T06:42:51.650Z] [INFO] Bot successfully reloaded with new commands and events.
