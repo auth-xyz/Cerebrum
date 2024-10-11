@@ -1,6 +1,5 @@
 import fs from 'fs/promises';
 import path from 'path';
-
 import { watch } from "chokidar";
 import { EventEmitter } from 'events';
 
@@ -17,17 +16,25 @@ export async function watchNodes() {
     watcher.on('addDir', async (dir) => {
       const configPath = path.join(dir, 'node_config.json');
 
-      if (await exists(configPath)) {
-        try {
-          const config = await readNodeConfig(configPath);
+      try {
+        if (await exists(configPath)) {
+          try {
+            const config = await readNodeConfig(configPath);
 
-          if (validateConfig(config)) {
-            logger.info(`Processing node: ${config.name}`); 
-            nodeEmitter.emit('nodeAdded', { config, dir });
+            if (validateConfig(config)) {
+              logger.info(`Processing node: ${config.name}`); 
+              nodeEmitter.emit('nodeAdded', { config, dir });
+            } else {
+              logger.warn(`Invalid configuration in ${configPath}`);
+            }
+          } catch (err) {
+            logger.error(`Error reading or validating config from ${configPath}: ${err.message}`); 
           }
-        } catch (err) {
-          logger.error(`Error processing folder: ${err.message}`); 
+        } else {
+          logger.warn(`Config file not found in ${dir}`);
         }
+      } catch (err) {
+        logger.error(`Error checking existence of ${configPath}: ${err.message}`);
       }
     });
 
@@ -37,8 +44,8 @@ export async function watchNodes() {
     });
 
     watcher.on('error', (err) => {
-      logger.error(`Watcher error: ${err}`); 
-      reject(`watcher error: ${err}`);
+      logger.error(`Watcher error: ${err.message}`); 
+      reject(`watcher error: ${err.message}`);
     });
   });
 };

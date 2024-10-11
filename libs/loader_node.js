@@ -1,7 +1,7 @@
 import { Collection, Routes } from 'discord.js';
 import { watch } from 'chokidar';
 import { rest } from './utils.js';
-import { logger } from './logger_node.js'; // Importing the logger
+import { logger } from './logger_node.js'; 
 
 import fs from 'fs';
 import path from 'path';
@@ -12,11 +12,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export async function loadFunctions(client, sortedData) {
   const { node_commands, node_events, node_type, node_guildid } = sortedData;
   const nodesDir = path.join(__dirname, '../nodes');
-  const nodeDirs = fs.readdirSync(nodesDir).filter(dir => {
-    const dirPath = path.join(nodesDir, dir);
-    return fs.statSync(dirPath).isDirectory() && 
-      fs.existsSync(path.join(dirPath, 'node_config.json'));
-  });
+  
+  let nodeDirs;
+  try {
+    nodeDirs = fs.readdirSync(nodesDir).filter(dir => {
+      const dirPath = path.join(nodesDir, dir);
+      return fs.statSync(dirPath).isDirectory() && 
+        fs.existsSync(path.join(dirPath, 'node_config.json'));
+    });
+  } catch (error) {
+    logger.error(`Error reading node directories: ${error.message}`);
+    return;
+  }
 
   if (node_commands.length > 0) {
     for (const nodeDir of nodeDirs) {
@@ -70,44 +77,56 @@ async function reloadComponents(client, components, type, nodeType, nodeGuildId,
 }
 
 async function handleComponent(client, component, type, nodeType, nodeGuildId) {
-  if (type === 'command') {
-    client.commands.set(component.data.name, component);
-    await registerCommand(client, component.data, nodeType, nodeGuildId);
-  } else {
-    const eventName = component.data.name;
-    const execute = (...args) => component.execute(...args);
-    component.once ? client.once(eventName, execute) : client.on(eventName, execute);
+  try {
+    if (type === 'command') {
+      client.commands.set(component.data.name, component);
+      await registerCommand(client, component.data, nodeType, nodeGuildId);
+    } else {
+      const eventName = component.data.name;
+      const execute = (...args) => component.execute(...args);
+      component.once ? client.once(eventName, execute) : client.on(eventName, execute);
+    }
+  } catch (error) {
+    logger.error(`Error handling component: ${error.message}`);
   }
 }
 
 async function registerCommand(client, commandData, nodeType, nodeGuildId) {
   const registerGlobalCommand = async () => {
-    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID));
-    logger.info(`Registered global command: ${commandData.name}`);
+    try {
+      await rest.put(Routes.applicationCommands(process.env.CLIENT_ID));
+      logger.info(`Registered global command: ${commandData.name}`);
+    } catch (error) {
+      logger.error(`Error registering global command: ${error.message}`);
+    }
   };
 
-  switch (nodeType) {
-    case 'hybrid':
-      if (nodeGuildId) {
-        await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, nodeGuildId), { body: [commandData] });
-        logger.info(`Registered server-specific command: ${commandData.name}`);
-      }
-      await registerGlobalCommand();
-      break;
+  try {
+    switch (nodeType) {
+      case 'hybrid':
+        if (nodeGuildId) {
+          await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, nodeGuildId), { body: [commandData] });
+          logger.info(`Registered server-specific command: ${commandData.name}`);
+        }
+        await registerGlobalCommand();
+        break;
 
-    case 'server':
-      if (nodeGuildId) {
-        await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, nodeGuildId), { body: [commandData] });
-        logger.info(`Registered server-specific command: ${commandData.name}`);
-      }
-      break;
+      case 'server':
+        if (nodeGuildId) {
+          await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, nodeGuildId), { body: [commandData] });
+          logger.info(`Registered server-specific command: ${commandData.name}`);
+        }
+        break;
 
-    case 'internal':
-      await registerGlobalCommand();
-      break;
+      case 'internal':
+        await registerGlobalCommand();
+        break;
 
-    default:
-      logger.warn(`Unknown node type for command registration: ${nodeType}`);
+      default:
+        logger.warn(`Unknown node type for command registration: ${nodeType}`);
+    }
+  } catch (error) {
+    logger.error(`Error registering command: ${error.message}`);
   }
 }
 
@@ -118,7 +137,11 @@ export function watchForChanges(client, sortedData) {
     logger.info(`Watching commands: ${commands}`);
     watch(commands).on('change', async (filePath) => {
       logger.info(`Command changed: ${filePath}`);
-      await reloadComponents(client, commands, 'command');
+      try {
+        await reloadComponents(client, commands, 'command');
+      } catch (error) {
+        logger.error(`Error reloading command after change: ${error.message}`);
+      }
     });
   }
 
@@ -126,7 +149,11 @@ export function watchForChanges(client, sortedData) {
     logger.info(`Watching events: ${events}`);
     watch(events).on('change', async (filePath) => {
       logger.info(`Event changed: ${filePath}`);
-      await reloadComponents(client, events, 'event');
+      try {
+        await reloadComponents(client, events, 'event');
+      } catch (error) {
+        logger.error(`Error reloading event after change: ${error.message}`);
+      }
     });
   }
 

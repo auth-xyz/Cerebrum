@@ -11,7 +11,8 @@ export async function sortConfigNodeData(nodeDir) {
         const configDir = subDirs.find(dir => dir.isDirectory());
 
         if (!configDir) {
-            throw new Error('No subdirectory found inside nodes folder');
+            logger.error('No subdirectory found inside nodes folder');
+            return null;
         }
 
         const configPath = path.join(nodeDir, configDir.name, 'node_config.json');
@@ -19,7 +20,8 @@ export async function sortConfigNodeData(nodeDir) {
         try {
             await fs.access(configPath);
         } catch (err) {
-            throw new Error(`Config file not found in ${configDir.name}`);
+            logger.error(`Config file not found in ${configDir.name}`);
+            return null;
         }
 
         const configData = await readNodeConfig(configPath);
@@ -37,7 +39,8 @@ export async function sortConfigNodeData(nodeDir) {
                 node_commands: node_commands || []
             };
         } else {
-            throw new Error('Invalid config data');
+            logger.error('Invalid config data');
+            return null;
         }
     } catch (error) {
         logger.error(`Error getting sorted data in controller node: ${error.message}`);

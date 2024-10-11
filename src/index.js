@@ -21,14 +21,14 @@ const client = new Client({
 
     if (typeof nodeData === "undefined" || !nodeData) {
       console.error('Error loading node data or nodeData is undefined, exiting...');
-      return process.exit(1);
+      //return process.exit(1);
     }
 
     const sortedData = await sortConfigNodeData(nodeDir);
     
     if (!sortedData) {
-      console.error('Error fetching sorted data, exiting...');
-      return process.exit(1);
+      console.error('Error fetching sorted data');
+      // return process.exit(1);
     }
 
     await client.login(process.env.DISCORD_TOKEN);
