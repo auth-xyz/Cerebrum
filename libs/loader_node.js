@@ -1,8 +1,9 @@
 import { Collection, Routes } from 'discord.js';
 import { watch } from 'chokidar';
 import { rest } from './utils.js';
+import { logger } from './logger_node.js'; // Importing the logger
 
-import fs from 'fs'
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -29,7 +30,7 @@ export async function loadFunctions(client, sortedData) {
     }
   }
 
-  console.log('Bot successfully reloaded with new commands and events.');
+  logger.info('Bot successfully reloaded with new commands and events.');
 }
 
 async function reloadComponents(client, components, type, nodeType, nodeGuildId, nodeDir) {
@@ -39,13 +40,13 @@ async function reloadComponents(client, components, type, nodeType, nodeGuildId,
     client.removeAllListeners();
   }
 
-  console.log('Components being reloaded:', components);
+  logger.info(`Components being reloaded: ${components}`);
 
   const componentPromises = components.map(async (componentPath) => {
     const file = typeof componentPath === 'string' ? componentPath : componentPath.file;
 
     if (!file) {
-      console.error('Component file path is undefined:', componentPath);
+      logger.warn(`Component file path is undefined: ${componentPath}`);
       return;
     }
 
@@ -54,14 +55,14 @@ async function reloadComponents(client, components, type, nodeType, nodeGuildId,
       const importedComponent = await import(fullPath);
 
       if (!importedComponent.default?.data || typeof importedComponent.default.execute !== 'function') {
-        console.warn(`Invalid ${type} structure in ${fullPath}`);
+        logger.warn(`Invalid ${type} structure in ${fullPath}`);
         return;
       }
 
       await handleComponent(client, importedComponent.default, type, nodeType, nodeGuildId);
-      console.log(`Reloaded ${type}: ${importedComponent.default.data.name}`);
+      logger.info(`Reloaded ${type}: ${importedComponent.default.data.name}`);
     } catch (error) {
-      console.error(error);
+      logger.error(`Error reloading component from ${file}: ${error.message}`);
     }
   });
 
@@ -81,15 +82,15 @@ async function handleComponent(client, component, type, nodeType, nodeGuildId) {
 
 async function registerCommand(client, commandData, nodeType, nodeGuildId) {
   const registerGlobalCommand = async () => {
-    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID))
-    console.log(`Registered global command: ${commandData.name}`);
+    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID));
+    logger.info(`Registered global command: ${commandData.name}`);
   };
 
   switch (nodeType) {
     case 'hybrid':
       if (nodeGuildId) {
         await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, nodeGuildId), { body: [commandData] });
-        console.log(`Registered server-specific command: ${commandData.name}`);
+        logger.info(`Registered server-specific command: ${commandData.name}`);
       }
       await registerGlobalCommand();
       break;
@@ -97,7 +98,7 @@ async function registerCommand(client, commandData, nodeType, nodeGuildId) {
     case 'server':
       if (nodeGuildId) {
         await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, nodeGuildId), { body: [commandData] });
-        console.log(`Registered server-specific command: ${commandData.name}`);
+        logger.info(`Registered server-specific command: ${commandData.name}`);
       }
       break;
 
@@ -106,7 +107,7 @@ async function registerCommand(client, commandData, nodeType, nodeGuildId) {
       break;
 
     default:
-      console.warn(`Unknown node type for command registration: ${nodeType}`);
+      logger.warn(`Unknown node type for command registration: ${nodeType}`);
   }
 }
 
@@ -114,21 +115,21 @@ export function watchForChanges(client, sortedData) {
   const { commands, events } = sortedData;
 
   if (commands) {
-    console.log('Watching commands:', commands);
+    logger.info(`Watching commands: ${commands}`);
     watch(commands).on('change', async (filePath) => {
-      console.log(`Command changed: ${filePath}`);
+      logger.info(`Command changed: ${filePath}`);
       await reloadComponents(client, commands, 'command');
     });
   }
 
   if (events) {
-    console.log('Watching events:', events);
+    logger.info(`Watching events: ${events}`);
     watch(events).on('change', async (filePath) => {
-      console.log(`Event changed: ${filePath}`);
+      logger.info(`Event changed: ${filePath}`);
       await reloadComponents(client, events, 'event');
     });
   }
 
-  console.log('Watching for file changes...');
+  logger.info('Watching for file changes...');
 }
 

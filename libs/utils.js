@@ -1,10 +1,11 @@
-import fs from 'fs/promises'
+import fs from 'fs/promises';
 import * as yup from 'yup';
 import { REST, Routes } from 'discord.js';
+import { logger } from './logger_node.js'; 
 
-import 'dotenv/config'
+import 'dotenv/config';
 
-export const rest = new REST().setToken(process.env.DISCORD_TOKEN)
+export const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 
 export async function validateConfig(config) {
   const schema = yup.object().shape({
@@ -22,6 +23,7 @@ export async function validateConfig(config) {
     await schema.validate(config, { abortEarly: false });
     return { valid: true, errors: null };
   } catch (err) {
+    logger.error(`Validation failed for config: ${err.errors}`); 
     return { valid: false, errors: err.errors };
   }
 }
@@ -32,7 +34,7 @@ export async function extractFunctionName(filePath) {
         const match = fileContent.match(/(?:export\s+default|module\.exports\s*=\s*)\s*(\w+)/);
         return match ? match[1] : path.basename(filePath);
     } catch (error) {
-        console.error(`Error reading file ${filePath}:`, error.message);
+        logger.error(`Error reading file ${filePath}: ${error.message}`); 
         return path.basename(filePath);
     }
 }
@@ -54,7 +56,7 @@ export function categorizeByType(files) {
         if (categorized[fileType]) {
             categorized[fileType].push(file);
         } else {
-            console.warn(`Unrecognized file type: ${file}`);
+            logger.warn(`Unrecognized file type: ${file}`); 
         }
     });
 
@@ -65,14 +67,19 @@ export async function exists(filePath) {
     try {
         await fs.access(filePath);
         return true;
-    } catch {
+    } catch (error) {
+        logger.error(`File does not exist: ${filePath}`); 
         return false;
     }
 }
 
 export async function readNodeConfig(configPath) {
-    const data = await fs.readFile(configPath, 'utf-8');
-    return JSON.parse(data);
+    try {
+        const data = await fs.readFile(configPath, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        logger.error(`Error reading node config file at ${configPath}: ${error.message}`); 
+        throw error;
+    }
 }
-
 
